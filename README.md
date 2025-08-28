@@ -1,5 +1,9 @@
 # adr-agent
 
+## Overview
+
+This repository implements an ADR (Architecture Decision Record) agent tool as a Python MCP (Model Context Protocol) server. It automatically generates MADR-formatted architecture decision records from conversation context, with features including automated ADR numbering, template-based formatting, and multiple transport protocols (HTTP, stdio, WebSocket). The tool follows a monorepo structure using Nx workspace and demonstrates self-documentation by generating its own ADRs for architectural decisions made during development.
+
 ✨ Your new, shiny [Nx workspace](https://nx.dev) has been successfully created! ✨.
 
 [Learn more about this workspace setup and the @aws/nx-plugin](https://awslabs.github.io/nx-plugin-for-aws). Now, let's get you up to speed!
