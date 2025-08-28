@@ -23,7 +23,7 @@ allow-direct-references = true
 
 [tool.ruff]
 exclude = [ ".ruff_cache", ".svn", ".tox", ".venv", "dist" ]
-line-length = 88
+line-length = 99
 indent-width = 4
 
   [tool.ruff.lint]
