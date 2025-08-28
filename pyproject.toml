@@ -2,16 +2,12 @@
 name = "nx-workspace"
 version = "1.0.0"
 dependencies = [
-  "adr_agent.adr",
   "adr_agent.tools",
   "pydantic>=2.11.7"
 ]
 
 [tool.uv.workspace]
-members = [ "packages/adr", "packages/tools" ]
-
-[tool.uv.sources."adr_agent.adr"]
-workspace = true
+members = [ "packages/tools" ]
 
 [tool.uv.sources."adr_agent.tools"]
 workspace = true
