@@ -1,0 +1,116 @@
+{
+  "name": "adr_agent.tools",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "packages/tools/adr_agent_tools",
+  "release": {
+    "version": {
+      "versionActions": "@nxlv/python/src/release/version-actions"
+    }
+  },
+  "tags": [],
+  "metadata": {
+    "generator": "py#project"
+  },
+  "targets": {
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "build": {
+      "dependsOn": ["lint", "compile", "test"],
+      "options": {
+        "outputPath": "{workspaceRoot}/dist/packages/tools"
+      }
+    },
+    "compile": {
+      "executor": "@nxlv/python:build",
+      "outputs": ["{workspaceRoot}/dist/packages/tools/build"],
+      "options": {
+        "outputPath": "{workspaceRoot}/dist/packages/tools/build",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      },
+      "cache": true
+    },
+    "format": {
+      "executor": "@nxlv/python:ruff-format",
+      "outputs": [],
+      "options": {
+        "filePatterns": ["adr_agent_tools", "tests"]
+      },
+      "cache": true
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:ruff-check",
+      "outputs": [],
+      "options": {
+        "lintFilePatterns": ["adr_agent_tools", "tests"]
+      },
+      "cache": true
+    },
+    "lock": {
+      "executor": "@nxlv/python:lock",
+      "options": {
+        "update": false
+      }
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "sync": {
+      "executor": "@nxlv/python:sync",
+      "options": {}
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/{projectRoot}/unittests",
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "command": "uv run pytest tests/",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "mcp-server-serve-stdio": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["uv run -m adr_agent_tools.mcp_server.stdio"],
+        "cwd": "{projectRoot}"
+      }
+    },
+    "mcp-server-serve-http": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["uv run -m adr_agent_tools.mcp_server.http"],
+        "cwd": "{projectRoot}"
+      }
+    },
+    "mcp-server-inspect": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "mcp-inspector -- uv run -m adr_agent_tools.mcp_server.stdio"
+        ],
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}
