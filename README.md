@@ -1,140 +1,130 @@
-# adr-agent
+# ADR MCP Server
 
-## Overview
+This repo contains a Python MCP server that helps agents create Architecture
+Decision Records in MADR format.
 
-This repository implements an ADR (Architecture Decision Record) agent tool as a Python MCP (Model Context Protocol) server. It automatically generates MADR-formatted architecture decision records from conversation context, with features including automated ADR numbering, template-based formatting, and multiple transport protocols (HTTP, stdio, WebSocket). The tool follows a monorepo structure using Nx workspace and demonstrates self-documentation by generating its own ADRs for architectural decisions made during development.
+The server exposes one MCP tool: `adr`. Given a working directory, it finds the
+git repository root, ensures `docs/adr/` exists, calculates the next four-digit
+ADR number, and returns the MADR template content.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) has been successfully created! ✨.
+It does not write the final ADR markdown file. The calling agent uses the
+returned metadata to create something like `docs/adr/0004-use-postgres.md`.
 
-[Learn more about this workspace setup and the @aws/nx-plugin](https://awslabs.github.io/nx-plugin-for-aws). Now, let's get you up to speed!
+## Requirements
 
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Available generators
-
-The following list of generators are what is currently available in the `@aws/nx-plugin`:
-
-- **ts#project**: Generates a TypeScript project
-
-- **py#project**: Generates a Python project
-
-- **py#fast-api**: Generates a FastAPI Python project
-
-- **ts#react-website**: Generates a React static website
-
-- **ts#react-website#auth**: Adds auth to an existing React website
-
-- **ts#infra**: Generates a cdk application
-
-- **ts#lambda-function**: Generate a TypeScript lambda function
-
-- **ts#trpc-api**: creates a trpc backend
-
-- **api-connection**: Integrates a source project with a target API project
-
-- **license**: Add LICENSE files and configure source code licence headers
-
-- **py#lambda-function**: Adds a lambda function to a python project
-
-- **ts#nx-generator**: Generator for adding an Nx Generator to an existing TypeScript project
-
-- **ts#mcp-server**: Generate a TypeScript Model Context Protocol (MCP) server for providing context to Large Language Models
-
-- **ts#nx-plugin**: Generate an Nx Plugin of your own! Build custom generators automatically made available for AI vibe-coding via MCP
-
-- **terraform#project**: Generates a Terraform project
-
-- **py#mcp-server**: Generate a Python Model Context Protocol (MCP) server for providing context to Large Language Models
-
-- **py#strands-agent**: Add a Strands Agent to a Python project
-
-You also have the option of using additional [commmunity plugins](https://nx.dev/plugin-registry) as needed.
-
-## Invoking a generator
+- `uv`
+- Python 3.12 or newer
+- This repo available at a stable path, for example:
 
 ```sh
-pnpm exec nx g @aws/nx-plugin:<generator-name>
+/home/dev/code/adr-mcp
 ```
 
-Alternatively you can use the NX IDE plugin to invoke your generators.
+The examples below assume that path. If you clone the repo somewhere else,
+replace `/home/dev/code/adr-mcp` in the config snippets.
 
-Refer to the [full documentation](https://awslabs.github.io/nx-plugin-for-aws) for additional guidance for each generator.
+## Run Locally
 
-## Common tasks
-
-### Build a single project
+The stdio MCP server is launched with:
 
 ```sh
-pnpm exec nx build <project-name>
+uv run --directory /home/dev/code/adr-mcp -m adr_agent_tools.mcp_server.stdio
 ```
 
-### Build all projects
+For direct development, the Nx target does the same thing:
 
 ```sh
-pnpm exec nx run-many --target build --all
-# or
-pnpm exec build:all
+pnpm exec nx run adr_agent.tools:mcp-server-serve-stdio
 ```
 
-### Run arbitrary task
+## Claude Code Setup
+
+Claude Code can load this as a user-level MCP server from
+`~/.claude/.mcp.json`.
+
+```json
+{
+  "mcpServers": {
+    "adr": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/home/dev/code/adr-mcp",
+        "-m",
+        "adr_agent_tools.mcp_server.stdio"
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Code after changing the file. In Claude, run `/mcp` and confirm
+the `adr` server is connected.
+
+## Codex Setup
+
+Codex loads MCP servers from `~/.codex/config.toml`.
+
+```toml
+[mcp_servers.adr]
+command = "uv"
+args = ["run", "--directory", "/home/dev/code/adr-mcp", "-m", "adr_agent_tools.mcp_server.stdio"]
+```
+
+Verify Codex sees the server:
 
 ```sh
-pnpm exec nx <target> <project-name>
+codex mcp list
 ```
 
-### Lint (and fix) all projects
+Expected result: an `adr` entry with `Status` set to `enabled`.
+
+## Validate The Tool
+
+Create a disposable git repo:
 
 ```sh
-pnpm exec nx run-many --target lint --configuration=fix --all
+mkdir -p /home/dev/code/adr-mcp-validation
+git -C /home/dev/code/adr-mcp-validation init
 ```
 
-## Test all projects (and update snapshots)
+Ask Claude or Codex to use the ADR tool from that repo. The tool should return:
+
+- `number_prefix`: `0001`
+- `adr_directory`: `/home/dev/code/adr-mcp-validation/docs/adr`
+- `template`: the MADR markdown template
+
+It should also create the directory:
 
 ```sh
-pnpm exec nx run-many --target test --all --update
+/home/dev/code/adr-mcp-validation/docs/adr
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+The tool will not create `0001-*.md` by itself. The agent should write that file
+using the returned number, directory, and template.
 
-[More about running tasks in the Nx docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Development
 
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` statements). This sync is automatically done when running tasks such as `build`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+Package source lives in:
 
 ```sh
-pnpm exec nx sync
+packages/tools/adr_agent_tools
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+Useful commands:
 
 ```sh
-pnpm exec nx sync:check
+pnpm exec nx run adr_agent.tools:test
+pnpm exec nx run adr_agent.tools:lint
+pnpm exec nx run adr_agent.tools:format
+pnpm exec nx run adr_agent.tools:build
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
-
-## Set up CI!
-
-Use the following command to configure a CI workflow for your workspace:
+The MCP entrypoints are:
 
 ```sh
-pnpm exec nx g ci-workflow
+python -m adr_agent_tools.mcp_server.stdio
+python -m adr_agent_tools.mcp_server.http
 ```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [@aws/nx-plugin quick-start](https://awslabs.github.io/nx-plugin-for-aws/en/get_started/quick-start/)
-- [@aws/nx-plugin AI dungeon game](https://awslabs.github.io/nx-plugin-for-aws/en/get_started/tutorials/dungeon-game/overview/)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
