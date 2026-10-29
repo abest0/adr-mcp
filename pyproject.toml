@@ -1,23 +1,40 @@
 [project]
-name = "nx-workspace"
+name = "adr-mcp"
 version = "1.0.0"
+description = "Lightweight MCP server and Agent Skill for generating MADR Architecture Decision Records in docs/adr/."
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
-  "adr_agent.tools",
-  "pydantic>=2.11.7"
+    "mcp>=1.13.0",
+    "pydantic>=2.11.7",
 ]
 
-[tool.uv.workspace]
-members = [ "packages/tools" ]
-
-[tool.uv.sources."adr_agent.tools"]
-workspace = true
+[project.scripts]
+adr-mcp-stdio = "adr_agent_tools.mcp_server.stdio:main"
+adr-mcp-http = "adr_agent_tools.mcp_server.http:main"
 
 [dependency-groups]
 dev = [
-  "ruff>=0.8.2",
-  "autopep8>=2.3.1",
-  "pytest>=8.3.4",
-  "pytest-sugar>=1.0.0",
-  "pytest-cov>=6.0.0",
-  "pytest-html>=4.1.1"
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.2",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["adr_agent_tools"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=adr_agent_tools --cov-report=term-missing"
+
+[tool.ruff]
+exclude = [".ruff_cache", ".venv", "dist"]
+line-length = 99
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "SIM", "I"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
